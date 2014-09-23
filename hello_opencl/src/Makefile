@@ -1,4 +1,4 @@
-NAME         = mandelbrot
+NAME         = hello_opencl
 
 OBJDIR       = ../obj
 EXEDIR       = ../bin
@@ -58,6 +58,3 @@ realclean: clean
 	-rmdir $(OBJDIR)
 	-rmdir $(EXEDIR)
 	-rm -f *~
-	-rm *.bmp
-	-rm debug
-

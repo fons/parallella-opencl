@@ -1,42 +1,60 @@
-NAME = hello_stdcl
+NAME         = hello_stdcl
+
+OBJDIR       = ../obj
+EXEDIR       = ../bin
+
+SOURCES      = $(wildcard *.c)
+CLSOURCES    = $(wildcard *.cl)
+INCLUDES     = $(wildcard *.h)
+
+CLKERNEL     = ocl_kernels.o
+
+OBJECTS      = $(addprefix $(OBJDIR)/, $(SOURCES:.c=.o))
+EXECUTABLE   = $(addprefix $(EXEDIR)/, $(NAME).x)
+MKTARGETDIR  = @mkdir -p $(@D)
 
 prefix=/usr/local/browndeer
-exec_prefix=${prefix}
 
-OPENCL_INCS = -I${exec_prefix}/include
-OPENCL_LIBS = -L${exec_prefix}/lib -locl
-
-STDCL_INCS = -I${prefix}/include
-STDCL_LIBS = -L${exec_prefix}/lib -lstdcl
-
-INCS = $(OPENCL_INCS) $(STDCL_INCS)
-LIBS = $(OPENCL_LIBS) $(STDCL_LIBS) 
+INCS += -I${prefix}/include
+LIBS += -L${prefix}/lib -lstdcl -locl
 
 CCFLAGS += -O3
 
 BUILD_OS = $(shell uname -s)
 
 ifeq ($(BUILD_OS),Linux)
-OBJS += ocl_kernels.o
+	CLOBJECTS += $(OBJDIR)/ocl_kernels.o
 endif
 
-all: $(NAME).x 
+###########################
+#$(info $(SOURCES))
+#$(info $(CLSOURCES))
+#$(info $(OBJECTS))
+#$(info $(OBJS))
+#$(info $(EXECUTABLE))
+################################
+all: $(EXECUTABLE) 
 
-$(NAME).x: $(NAME).o $(OBJS) 
-	$(CC) $(CCFLAGS) $(INCS) -o $(NAME).x $(NAME).o $(OBJS) $(LIBS) 
+$(EXECUTABLE): $(OBJDIR)/$(NAME).o $(CLOBJECTS) 
+	$(MKTARGETDIR)
+	$(CC) $(CCFLAGS) $(INCS) -o $(EXECUTABLE) $(OBJECTS) $(CLOBJECTS) $(LIBS) 
 
-ocl_kernels.o: matvecmult.cl
-	clcc -c -o ocl_kernels.o matvecmult.cl
+$(CLOBJECTS) : $(CLSOURCES)
+	$(MKTARGETDIR)
+	clcc -c -o $(CLOBJECTS) $(CLSOURCES)
 
-
-.SUFFIXES:
-.SUFFIXES: .c .o
-
-.c.o:
-	$(CC) $(CCFLAGS) $(INCS) -c $<
+$(OBJDIR)/%.o : %.c $(INCLUDES)
+	$(MKTARGETDIR)
+	$(CC) $(CCFLAGS) $(INCS) -c $<  -o $@
 
 clean:
 	rm -f *.o 
+	rm -f $(CLOBJECTS) 
+	rm -f $(OBJECTS)
+	rm -f $(EXECUTABLE)
+	rm -f $(EXEDIR)/core 
 
-distclean: clean 
-	rm -f *.x
+realclean: clean
+	-rmdir $(OBJDIR)
+	-rmdir $(EXEDIR)
+	-rm -f *~
